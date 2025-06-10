@@ -1,0 +1,36 @@
+[tool.poetry]
+name        = "backend"
+version     = "0.1.0"
+description = "Backend Portatou"
+authors     = ["Votre Nom <vous@exemple.com>"]
+readme      = "README.md"
+
+packages = [
+  { include = "app" }   
+]
+
+[tool.poetry.dependencies]
+python            = "^3.11"
+fastapi           = "^0.115.0"
+uvicorn           = { extras = ["standard"], version = "^0.34.0" }
+sqlalchemy        = "^2.0.41"
+alembic           = "^1.16.1"
+pydantic-settings = "^2.9.1"
+celery            = "^5.5.3"
+redis             = "^5.0.0"
+minio             = "^7.2.15"
+httpx             = "^0.28.1"
+asyncpg = "^0.30.0"
+psycopg2-binary = "^2.9.10"
+
+[tool.poetry.group.dev.dependencies]
+pytest       = "^8.4.0"
+ruff         = "^0.4.6"
+black        = "^24.4.2"
+mypy         = "^1.16.0"
+pre-commit   = "^4.2.0"
+factory-boy  = "^3.3.3"
+
+[build-system]
+requires = ["poetry-core>=1.8.0"]
+build-backend = "poetry.core.masonry.api"
