@@ -22,6 +22,7 @@ minio             = "^7.2.15"
 httpx             = "^0.28.1"
 asyncpg = "^0.30.0"
 psycopg2-binary = "^2.9.10"
+cryptography = "^45.0.4"
 
 [tool.poetry.group.dev.dependencies]
 pytest       = "^8.4.0"
@@ -30,6 +31,8 @@ black        = "^24.4.2"
 mypy         = "^1.16.0"
 pre-commit   = "^4.2.0"
 factory-boy  = "^3.3.3"
+pytest-asyncio = "^1.0.0"
+aiosqlite = "^0.21.0"
 
 [build-system]
 requires = ["poetry-core>=1.8.0"]

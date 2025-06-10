@@ -9,4 +9,5 @@ class Client(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     kdnr = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
+    phone = Column(String, nullable=True)  # <— ajouté
     created_at = Column(DateTime, default=datetime.utcnow)
