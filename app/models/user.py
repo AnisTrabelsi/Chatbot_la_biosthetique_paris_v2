@@ -5,6 +5,7 @@ from app.db.base import Base
 from cryptography.fernet import Fernet
 
 # Clé Fernet pour chiffrer le token Portatour
+# À générer une seule fois et mettre dans .env : FERNET_KEY
 fernet_key = os.getenv("FERNET_KEY", Fernet.generate_key().decode())
 fernet = Fernet(fernet_key.encode())
 

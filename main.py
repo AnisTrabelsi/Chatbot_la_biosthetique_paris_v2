@@ -10,20 +10,25 @@ from app.api.v1.invoices import router as invoices_router
 from app.services.prep_service import build_docx
 from app.api.v1.webhook import router as webhook_router
 from app.api.v1.invoices import router as invoices_router
+from app.api.v1.auth import router as auth_router
 
+from app.api.v1 import auth, users, clients, stats, prep, catalog, invoices, webhook
 app = FastAPI()
 
 # Middleware global
 app.middleware("http")(enforce_x_user_id)
 
 # API routes
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(clients.router)
+app.include_router(stats.router)
+app.include_router(prep.router)
+app.include_router(catalog.router)
+app.include_router(invoices.router)
+app.include_router(webhook.router)
 app.include_router(auth_router)
-app.include_router(clients_router)
-app.include_router(stats_router)
-app.include_router(prep_router)
-app.include_router(catalog_router)
-app.include_router(invoices_router)
-app.include_router(webhook_router)
+
 # WebSocket pour notifications de préparation
 @app.websocket("/ws/prep/{user_id}")
 async def ws_prep(websocket: WebSocket, user_id: str):

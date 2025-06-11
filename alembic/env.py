@@ -1,42 +1,24 @@
-import sys
+# alembic/env.py
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
+from pathlib import Path
 from logging.config import fileConfig
-from sqlalchemy import engine_from_config, pool
+from dotenv import load_dotenv
+
 from alembic import context
+from sqlalchemy import engine_from_config, pool
 
-# Importer le Declarative Base et les modèles
-from app.db.base import Base
-import app.models.user
-import app.models.client
-import app.models.stats_file
+# ------- charge .env -------
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(env_path, encoding="utf-8")
 
-# Configuration Alembic
+# ------- URL DB -------
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")  # <- plus sûr
+
+# Si vous préférez l'import :
+# from app.db.session import DATABASE_URL as SQLALCHEMY_DATABASE_URL
+
 config = context.config
 fileConfig(config.config_file_name)
-target_metadata = Base.metadata
+config.set_main_option("sqlalchemy.url", SQLALCHEMY_DATABASE_URL)
 
-def run_migrations_offline():
-    url = os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
-    context.configure(
-        url=url, target_metadata=target_metadata, literal_binds=True
-    )
-    with context.begin_transaction():
-        context.run_migrations()
-
-def run_migrations_online():
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
-    with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
-        with context.begin_transaction():
-            context.run_migrations()
-
-if context.is_offline_mode():
-    run_migrations_offline()
-else:
-    run_migrations_online()
+# reste du fichier inchangé …

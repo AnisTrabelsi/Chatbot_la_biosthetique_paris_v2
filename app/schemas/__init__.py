@@ -1,13 +1,19 @@
-from .user import UserRead, AuthPortatourRequest, AuthPortatourResponse
-from .client import ClientCreate, ClientRead
-from .stats import StatsFileCreate, StatsFileRead
+# app/schemas/__init__.py
+from .user import (               # noqa: F401
+    UserRead,
+    UserUpdateLocation,
+    UserUpdateSector,
+    PortatourAuthIn,
+    AuthPortatourRequest,
+    AuthPortatourResponse,
+
+)
 
 __all__ = [
     "UserRead",
+    "UserUpdateLocation",
+    "UserUpdateSector",
+    "PortatourAuthIn",
     "AuthPortatourRequest",
     "AuthPortatourResponse",
-    "ClientCreate",
-    "ClientRead",
-    "StatsFileCreate",
-    "StatsFileRead",
 ]
