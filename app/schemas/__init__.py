@@ -1,4 +1,5 @@
 # app/schemas/__init__.py
+from .client import ClientCreate, ClientRead
 
 from .user import (               # noqa: F401
     UserRead,
