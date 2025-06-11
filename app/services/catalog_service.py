@@ -1,6 +1,5 @@
 import pdfplumber
 from typing import Dict
-from openai import OpenAI  # ou wrapper llm_service
 
 async def parse_pdf_metadata(file_bytes: bytes) -> Dict:
     # Lecture texte simple

@@ -5,6 +5,7 @@ from app.api.v1.clients import router as clients_router
 from app.api.v1.stats import router as stats_router
 from app.api.v1.prep import router as prep_router
 from app.core.ws_manager import manager
+from app.api.v1.catalog import router as catalog_router
 
 app = FastAPI()
 
@@ -16,6 +17,7 @@ app.include_router(auth_router)
 app.include_router(clients_router)
 app.include_router(stats_router)
 app.include_router(prep_router)
+app.include_router(catalog_router)
 
 @app.websocket("/ws/prep/{user_id}")
 async def ws_prep(websocket: WebSocket, user_id: str):

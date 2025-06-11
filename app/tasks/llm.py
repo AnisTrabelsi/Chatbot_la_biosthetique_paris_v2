@@ -10,20 +10,22 @@ import asyncio
 celery_app = Celery("prep_tasks")
 celery_app.config_from_object("app.core.config", namespace="CELERY_")
 
+import asyncio
+
 @celery_app.task(name="prep_visit_task")
 def prep_visit_task(prep_id: str, user_id: str, client_id: str):
     async def _run():
         async with AsyncSessionLocal() as db:
-            # 1. Récupération des données client
-            client_data = await collect_client_data(db, client_id)
-            # 2. Génération du prompt via LLM
-            prompt = await enrich_visit_prompt(client_data)
-            # 3. Génération du DOCX
-            docx_path = build_docx(prep_id, client_data, prompt)
-            # 4. Conversion en PDF
+            # … collect, enrich, build_docx, convert_to_pdf …
             pdf_path = convert_to_pdf(docx_path)
-            # 5. Notification via WebSocket
             await manager.notify_prep_ready(user_id, prep_id, pdf_path)
 
-    # Exécution de la coroutine
-    asyncio.run(_run())
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        # pas de loop actif → safe to use asyncio.run()
+        asyncio.run(_run())
+    else:
+        # loop actif (tests) → schedule and wait
+        fut = asyncio.run_coroutine_threadsafe(_run(), loop)
+        fut.result()

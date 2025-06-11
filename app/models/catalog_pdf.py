@@ -11,4 +11,4 @@ class CatalogPDF(Base):
     filename = Column(String, nullable=False)
     version = Column(Integer, default=1)
     uploaded_at = Column(DateTime, default=datetime.utcnow)
-    metadata = Column(JSON, nullable=True)
+    meta = Column("metadata", JSON, nullable=True)  # <— renommer en meta
