@@ -1,4 +1,3 @@
-# app/core/ws_manager.py
 from typing import Dict
 from fastapi import WebSocket
 
@@ -20,6 +19,15 @@ class ConnectionManager:
                 "event": "prep_ready",
                 "prep_id": prep_id,
                 "pdf_path": pdf_path,
+            })
+
+    async def notify_prospect_ready(self, phone_number: str, session_id: str, enrichment: dict):
+        ws = self.active.get(phone_number)
+        if ws:
+            await ws.send_json({
+                "event": "prospect_ready",
+                "session_id": session_id,
+                "enrichment": enrichment,
             })
 
 manager = ConnectionManager()
