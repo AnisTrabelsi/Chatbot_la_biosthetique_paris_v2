@@ -3,6 +3,7 @@ import os
 from sqlalchemy import Column, String, Float, Boolean
 from app.db.base import Base
 from cryptography.fernet import Fernet
+from sqlalchemy.orm import relationship
 
 # Clé Fernet pour chiffrer le token Portatour
 # À générer une seule fois et mettre dans .env : FERNET_KEY
@@ -18,7 +19,12 @@ class User(Base):
     longitude = Column(Float, nullable=True)
     sector = Column(String, nullable=True)
     onboarded = Column(Boolean, default=False)
-
+    wa_sessions = relationship(
+        "WASession",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin",      # ou "joined" selon votre préférence
+     )
     @property
     def portatour_token(self) -> str | None:
         if self.portatour_token_enc:

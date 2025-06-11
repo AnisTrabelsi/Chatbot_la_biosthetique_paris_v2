@@ -1,12 +1,14 @@
-import uuid
-from sqlalchemy import Column, String, JSON, ForeignKey
+from sqlalchemy import Column, String, Text
 from app.db.base import Base
 
+
 class StatsFile(Base):
+    """
+    Ligne d’un bilan Excel stockée brute en JSON.
+    """
+
     __tablename__ = "stats_files"
 
-    id: str = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    kdnr: str = Column(String, ForeignKey("clients.kdnr"), nullable=False, index=True)
-
-    # ➜ nouvelle colonne pour stocker la ligne Excel brute
-    raw: dict | None = Column(JSON, nullable=True)          # <— AJOUT
+    id = Column(String, primary_key=True)
+    kdnr = Column(String, index=True, nullable=False)
+    raw = Column(Text, nullable=False)            # ← ajouté

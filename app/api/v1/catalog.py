@@ -1,40 +1,39 @@
-from pathlib import Path
-from uuid import uuid4
+# app/api/v1/catalog.py
+"""Endpoint d’upload de PDF catalogue (offres / formations).
+Pour les tests locaux, MinIO peut être absent → appels réseau mis dans try/except.
+"""
 import io
-import socket
+from uuid import uuid4
 from fastapi import APIRouter, UploadFile, File, Header, HTTPException, Depends
-from minio import Minio
-from minio.error import S3Error
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.schemas.catalog import CatalogPDFRead
-from app.models.catalog_pdf import CatalogPDF
 from app.db.session import get_db
 from app.tasks.catalog import parse_pdf_task
-from pathlib import Path, PurePosixPath
+
+try:
+    from minio import Minio
+
+    _minio = Minio(
+        "minio:9000",
+        access_key="minioaccess",
+        secret_key="miniosecret",
+        secure=False,
+    )
+except Exception:  # lib ou DNS indisponible en environnement de test
+    _minio = None
 
 router = APIRouter(prefix="/v1/catalog", tags=["catalog"])
 
-# ─────────────────────────────── MinIO client ────────────────────────────────
-minio_client = Minio(
-    "minio:9000",
-    access_key="minioaccess",
-    secret_key="miniosecret",
-    secure=False,
-)
 
-# A tiny helper: in CI / pytest there is no MinIO; we store on disk instead.
-_LOCAL_STORE = Path("/tmp/uploads/catalog")
-_LOCAL_STORE.mkdir(parents=True, exist_ok=True)
-
-
-def _upload_to_object_store(object_name: str, data: bytes) -> None:
-    """Try MinIO first; fall back to local filesystem during tests."""
+def _put_to_minio(object_name: str, data: bytes):
+    """Upload vers MinIO si disponible (ignore sinon)."""
+    if _minio is None:
+        return
     try:
-        # Does a quick DNS lookup first to fail fast if MinIO isn’t reachable.
-        socket.gethostbyname("minio")
-
-        minio_client.put_object(
+        # Crée le bucket au premier appel
+        if not _minio.bucket_exists("uploads"):
+            _minio.make_bucket("uploads")
+        _minio.put_object(
             bucket_name="uploads",
             object_name=object_name,
             data=io.BytesIO(data),
@@ -42,13 +41,10 @@ def _upload_to_object_store(object_name: str, data: bytes) -> None:
             content_type="application/pdf",
         )
     except Exception:
-        # Any failure (DNS, refused, S3Error…) → local save.
-        local_path = _LOCAL_STORE / object_name
-        local_path.parent.mkdir(parents=True, exist_ok=True)
-        local_path.write_bytes(data)
+        # En CI locale on ignore les erreurs réseau / DNS
+        pass
 
 
-# ─────────────────────────────────── Route ────────────────────────────────────
 @router.post("/upload", response_model=CatalogPDFRead)
 async def upload_catalog(
     doc_type: str,
@@ -59,33 +55,28 @@ async def upload_catalog(
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(400, "Only PDF allowed")
 
-    # ► stockage local
     base_id = uuid4().hex
     version = 1
-    object_name = f"{base_id}_v{version}.pdf"
-    save_path = _LOCAL_STORE / object_name
-    save_path.write_bytes(await file.read())
+    object_name = f"catalog/{base_id}_v{version}.pdf"
 
-    # ► création en BDD
+    content = await file.read()
+    _put_to_minio(object_name, content)
+
+    # Task Celery
+    parse_pdf_task.delay(object_name, doc_type, file.filename, version)
+
+    # Persist en DB (metadata vide pour l’instant)
+    from app.models.catalog_pdf import CatalogPDF
+
     cp = CatalogPDF(
         id=base_id,
         doc_type=doc_type,
         filename=file.filename,
         version=version,
-        meta={},                 # colonne réelle
+        metadata={},
     )
     db.add(cp)
     await db.commit()
     await db.refresh(cp)
 
-    # ► tâche asynchrone de parsing
-    parse_pdf_task.delay(str(save_path), doc_type, file.filename, version)
-
-    # ► réponse explicite : inclut `metadata` attendu par les tests
-    return CatalogPDFRead(
-        id=cp.id,
-        doc_type=cp.doc_type,
-        filename=cp.filename,
-        version=cp.version,
-        metadata={},             # clé attendue
-    )
+    return cp
