@@ -1,4 +1,5 @@
 # app/schemas/__init__.py
+
 from .user import (               # noqa: F401
     UserRead,
     UserUpdateLocation,
@@ -6,6 +7,8 @@ from .user import (               # noqa: F401
     PortatourAuthIn,
     AuthPortatourRequest,
     AuthPortatourResponse,
+    LocationUpdate, 
+    SectorUpdate,
 
 )
 

@@ -1,28 +1,30 @@
 # app/schemas/user.py
-from pydantic import BaseModel, Field
-from typing import Optional
+from __future__ import annotations
 
-# ── READ ────────────────────────────────────────────────────────────────
+# ─── typing helpers ────────────────────────────────────────────
+from typing import Annotated
+
+from pydantic import BaseModel, Field, confloat
+
+# --------- READ ---------
 class UserRead(BaseModel):
     id: str
-    latitude: Optional[float]
-    longitude: Optional[float]
-    sector: Optional[str]
+    latitude: float | None = None
+    longitude: float | None = None
+    sector: str | None = None
     onboarded: bool
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
-# ── WRITE / UPDATE ──────────────────────────────────────────────────────
+# --------- UPDATE ----------
 class UserUpdateLocation(BaseModel):
-    latitude: float = Field(..., ge=-90, le=90)
-    longitude: float = Field(..., ge=-180, le=180)
+    latitude: Annotated[float, confloat(ge=-90, le=90)] = Field(..., example=48.8566)
+    longitude: Annotated[float, confloat(ge=-180, le=180)] = Field(..., example=2.3522)
 
 
 class UserUpdateSector(BaseModel):
-    sector: str = Field(..., min_length=1, max_length=100)
-
+    sector: str = Field(..., min_length=1, max_length=120, example="Paris-Ouest")
 
 # ── AUTH PORTATOUR ──────────────────────────────────────────────────────
 class PortatourAuthIn(BaseModel):
@@ -41,3 +43,10 @@ class AuthPortatourResponse(BaseModel):
     """Réponse du POST /auth/portatour – renvoie un jeton simulé."""
     access_token: str = Field(..., example="pt_alice_token")
     token_type: str = Field(default="bearer", example="bearer")
+
+class LocationUpdate(BaseModel):
+    latitude: confloat(ge=-90, le=90)  = Field(..., example=48.8566)
+    longitude: confloat(ge=-180, le=180) = Field(..., example=2.3522)
+
+class SectorUpdate(BaseModel):
+    sector: str = Field(..., min_length=1, max_length=120, example="Paris-Ouest")    
