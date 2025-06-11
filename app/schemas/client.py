@@ -68,3 +68,31 @@ class ClientCreate(ClientBase):
 
 class ClientRead(ClientBase):
     id: str
+
+class ClientUpdate(BaseModel):
+    """Champs modifiables d’un client."""
+    name: constr(min_length=2, max_length=100) | None = None
+    phone: str | None = None    # alias vers phone_e164
+    kdnr: constr(pattern=r"^\d{3,8}$") | None = None
+    siret: constr(pattern=r"^\d{14}$") | None = None
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    @field_validator("phone", mode="before")
+    @classmethod
+    def _validate_phone_alias(cls, v):
+        if v is None:
+            return v
+        # utilise _normalize_phone du module
+        from .client import _normalize_phone
+        return _normalize_phone(v)
+
+    @field_validator("siret")
+    @classmethod
+    def _validate_siret_update(cls, v):
+        if v is None:
+            return v
+        from .client import _luhn_ok
+        if not _luhn_ok(v):
+            raise ValueError("invalid SIRET (checksum)")
+        return v
