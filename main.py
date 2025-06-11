@@ -11,6 +11,7 @@ from app.services.prep_service import build_docx
 from app.api.v1.webhook import router as webhook_router
 from app.api.v1.invoices import router as invoices_router
 from app.api.v1.auth import router as auth_router
+from app.api.v1.sessions import router as sessions_router
 
 from app.api.v1 import auth, users, clients, stats, prep, catalog, invoices, webhook
 app = FastAPI()
@@ -28,6 +29,7 @@ app.include_router(catalog.router)
 app.include_router(invoices.router)
 app.include_router(webhook.router)
 app.include_router(auth_router)
+app.include_router(sessions_router)
 
 # WebSocket pour notifications de préparation
 @app.websocket("/ws/prep/{user_id}")
