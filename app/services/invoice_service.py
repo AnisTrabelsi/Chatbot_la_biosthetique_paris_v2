@@ -1,18 +1,26 @@
-# app/services/invoice_service.py  (ou mieux: prep_service.py)
-from docx import Document
-from pathlib import Path
+import io
+from typing import Dict
+from datetime import datetime
+from pytesseract import image_to_string
+from pdf2image import convert_from_bytes
+from app.services.prep_service import build_docx  # compatibility
+__all__ = ["parse_invoice_pdf", "build_docx"]
 
-def build_docx(prep_id: str, client_data: dict, prompt: str) -> str:
-    output_dir = Path("/tmp/prep_docs")
-    output_dir.mkdir(parents=True, exist_ok=True)
-    docx_path = output_dir / f"{prep_id}.docx"
+async def parse_invoice_pdf(file_bytes: bytes) -> Dict:
+    """
+    Extrait le texte d'une facture PDF via OCR (pdf2image + pytesseract),
+    puis tente de trouver le montant et la date. Ici, stub de démonstration.
+    """
+    # Convertir les pages PDF en images
+    images = convert_from_bytes(file_bytes)
+    full_text = "".join(image_to_string(img) for img in images)
 
-    doc = Document()
-    doc.add_heading(f"Rapport de visite: {client_data['name']}", level=1)
-    doc.add_paragraph(f"Kdnr: {client_data['kdnr']}")
-    doc.add_paragraph("Prompt généré par l’IA :")
-    doc.add_paragraph(prompt)
-    # Autres sections…
-    doc.save(docx_path)
-
-    return str(docx_path)
+    # Recherche simplifiée de montant et date
+    amount = None
+    date = None
+    for line in full_text.splitlines():
+        if '$' in line:
+            amount = line.strip()
+        if '/' in line and len(line.split('/')[0]) <= 2:
+            date = line.strip()
+    return {"amount": amount or "unknown", "date": date or datetime.utcnow().isoformat()}

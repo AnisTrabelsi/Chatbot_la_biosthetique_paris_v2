@@ -1,14 +1,18 @@
-import uuid
-from datetime import datetime
-from sqlalchemy import Column, String, DateTime, JSON, Integer
+from sqlalchemy import Column, String, Integer, JSON
 from app.db.base import Base
 
+
 class CatalogPDF(Base):
+    """
+    Table stockant les PDF « catalogue ».
+
+    ⚠️  On NE PEUT PAS utiliser le nom « metadata » en Declarative ;
+    on le remplace donc par « meta ».
+    """
     __tablename__ = "catalog_pdfs"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    doc_type = Column(String, nullable=False)
-    filename = Column(String, nullable=False)
-    version = Column(Integer, default=1)
-    uploaded_at = Column(DateTime, default=datetime.utcnow)
-    meta = Column("metadata", JSON, nullable=True)  # <— renommer en meta
+    id: str = Column(String, primary_key=True)
+    doc_type: str = Column(String, nullable=False)
+    filename: str = Column(String, nullable=False)
+    version: int = Column(Integer, nullable=False)
+    meta: dict = Column(JSON, default=dict)          # ← colonne valide

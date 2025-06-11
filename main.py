@@ -6,6 +6,10 @@ from app.api.v1.stats import router as stats_router
 from app.api.v1.prep import router as prep_router
 from app.api.v1.catalog import router as catalog_router
 from app.core.ws_manager import manager
+from app.api.v1.invoices import router as invoices_router
+from app.services.prep_service import build_docx
+from app.api.v1.webhook import router as webhook_router
+from app.api.v1.invoices import router as invoices_router
 
 app = FastAPI()
 
@@ -18,7 +22,8 @@ app.include_router(clients_router)
 app.include_router(stats_router)
 app.include_router(prep_router)
 app.include_router(catalog_router)
-
+app.include_router(invoices_router)
+app.include_router(webhook_router)
 # WebSocket pour notifications de préparation
 @app.websocket("/ws/prep/{user_id}")
 async def ws_prep(websocket: WebSocket, user_id: str):
