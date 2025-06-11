@@ -1,27 +1,38 @@
+# app/services/excel_service.py
+import uuid
 import pandas as pd
 from io import BytesIO
-from typing import List, Dict
-from app.models.stats_file import StatsFile
+from fastapi import HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-async def parse_stats_excel(
-    file_bytes: bytes, kdnr: str, db: AsyncSession
-) -> List[StatsFile]:
+from app.models.client import Client
+from app.models.stats_file import StatsFile
+
+async def parse_stats_excel(content: bytes, kdnr: str, db: AsyncSession) -> list[StatsFile]:
     """
-    Lit un Excel (bytes), extrait chaque feuille (ou la première),
-    transforme en JSON ligne par ligne, stocke en DB.
-    Retourne la liste des StatsFile créés.
+    • Vérifie que le client existe (kdnr = 1 lettre optionnelle + 3-8 digits).
+    • Parse le classeur excel (stub minimal pour les tests).
+    • Crée un StatsFile par ligne et les persiste.
     """
-    # Charger avec pandas
-    df = pd.read_excel(BytesIO(file_bytes), sheet_name=0)
-    results = []
-    for idx, row in df.iterrows():
-        data = row.to_dict()
-        stats = StatsFile(kdnr=kdnr, data=data)
+    # ── 1. client must exist ────────────────────────────────────────────────
+    res = await db.execute(select(Client).where(Client.kdnr == kdnr))
+    client = res.scalar_one_or_none()
+    if client is None:
+        raise HTTPException(404, "Client not found")
+
+    # ── 2. parse excel (very light) ────────────────────────────────────────
+    df = pd.read_excel(BytesIO(content))
+
+    stats_objs: list[StatsFile] = []
+    for _, row in df.iterrows():
+        stats = StatsFile(
+            id=str(uuid.uuid4()),
+            kdnr=kdnr,
+            raw=row.to_json(),          # on stocke brut pour le stub
+        )
         db.add(stats)
-        results.append(stats)
+        stats_objs.append(stats)
+
     await db.commit()
-    # Rafraîchir pour avoir les IDs
-    for stats in results:
-        await db.refresh(stats)
-    return results
+    return stats_objs

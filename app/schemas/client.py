@@ -34,9 +34,13 @@ class ClientBase(BaseModel):
     name: constr(min_length=2, max_length=100)
     # alias JSON = "phone" pour coller aux tests
     phone_e164: str = Field(..., alias="phone", examples=["+33612345678"])
-    kdnr: constr(pattern=r"^\d{3,8}$") | None = Field(
-        default=None, description="Numéro client (3-8 chiffres)"
+     # Autorise 1 lettre optionnelle suivie de 3-8 chiffres  ex. K100, C123456
+    kdnr: constr(pattern=r"^[A-Za-z]?\d{3,8}$") | None = Field(
+        default=None,
+        description="Kdnr : 1 lettre optionnelle + 3-8 chiffres",
+        examples=["K100", "123456", "C123456"],
     )
+    
     siret: constr(pattern=r"^\d{14}$") | None = Field(
         default=None, description="SIRET 14 chiffres"
     )
